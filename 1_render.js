@@ -156,12 +156,22 @@ function performUnitOfWork(nextUnitOfWork) {
 // 不能采取刚刚那种递归遍历来构建DOM树
 
 // 添加真实的dom节点
-function createDom(fiber) {
-
-}
+function createDom(fiber) {}
 
 function commitRoot() {
-  //todo add nodes to dom
+  commitWork(wipRoot.child);
+  wipRoot = null;
+}
+
+// 提交每一次任务,渲染真实DOM
+function commitWork(fiber) {
+  if (!fiber) {
+    return;
+  }
+  const domParent = fiber.parent.dom;
+  domParent.appendChild(fiber.dom);
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
 }
 
 function render(element, container) {
@@ -169,73 +179,74 @@ function render(element, container) {
   wipRoot = {
     dom: container,
     props: {
-      children: [element]
-    }
-  }
+      children: [element],
+    },
+  };
 
-  nextUnitOfWork = wipRoot
-  }
-  
-  let nextUnitOfWork = null;
-  let wipRoot = null
+  nextUnitOfWork = wipRoot;
+}
+
+let nextUnitOfWork = null;
+let currentRoot = null;
+let wipRoot = null;
 
 function performUnitOfWork(fiber) {
   //做三个事情
-  // 1.add dom node 
+  // 1.add dom node
   // 2.create new fiber
   // return next unit of work
 
   // create dom node
   // fiber初始化一个dom
-  if(!fiber.dom) {
-    fiber.dom = createDom(fiber)
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber);
   }
   // 每个工作单元都进行添加真实dom会导致如果浏览器在完成其它任务中断了工作单元，就没有完整的UI了
   // if(fiber.parent) {
   //   fiber.parent.dom.appendChild(fiber.dom)
   // }
 
-  // 渲染整个dom
-  if(!nextUnitOfWork && wipRoot) {
-    commitRoot()
+  // 渲染到整个dom
+  if (!nextUnitOfWork && wipRoot) {
+    commitRoot();
   }
 
   // create new fiber
-  const elements = fiber.props.children
-  let index = 0
-  let prevSibling = null
+  const elements = fiber.props.children;
+  let index = 0;
+  let prevSibling = null;
 
   // 为每一个孩子创建fiber
-  while(index < elements.length) {
-    const element = elements[index]
+  while (index < elements.length) {
+    const element = elements[index];
 
     const newFiber = {
       type: element.type,
       props: element.props,
       parent: fiber,
-      dom: null
-    }
+      dom: null,
+    };
 
     // 将他们添加到fiber中
-    if(index === 0) {
-      fiber.child = newFiber
+    if (index === 0) {
+      fiber.child = newFiber;
     } else {
-      prevSibling.sibling = newFiber
+      prevSibling.sibling = newFiber;
     }
 
-    prevSibling = newFiber
-    index++
+    prevSibling = newFiber;
+    index++;
   }
 
   // reutrn next unit of work
-  if(fiber.child) {
-    return fiber.child
+  if (fiber.child) {
+    return fiber.child;
   }
-  let nextFiber = fiber
-  while(nextFiber) {
-    if(nextFiber.sibling) {
-      return nextFiber.sibling
+  let nextFiber = fiber;
+  while (nextFiber) {
+    if (nextFiber.sibling) {
+      return nextFiber.sibling;
     }
-    nextFiber = nextFiber.parent
+    nextFiber = nextFiber.parent;
   }
 }
