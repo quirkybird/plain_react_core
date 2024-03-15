@@ -130,9 +130,6 @@ function workLoop(deadline) {
 
 requestIdleCallback(workLoop);
 
-function performUnitOfWork(nextUnitOfWork) {
-  //todo
-}
 
 // 现在我们将改变之前的render函数，在一开始我们创建fiber，并将其设置为nextUnitOfWork,performUnitWork做三件事
 /**
